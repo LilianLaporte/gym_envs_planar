@@ -1,6 +1,8 @@
 import numpy as np
 import time
 
+from forwardKinematics.planarFks.groundRobotFk import GroundRobotFk
+
 from groundRobots.envs.groundRobotEnv import GroundRobotEnv
 
 
@@ -10,12 +12,13 @@ class GroundRobotArmEnv(GroundRobotEnv):
     MAX_ARM_POS = np.pi
     MAX_ARM_ACC = 9 * np.pi
 
-    def __init__(self, render=False, dt=0.01, n_arm=1):
+    def __init__(self, render=False, dt=0.01, n_arm=2):
         self._n_arm = n_arm
         self._limUpArmPos = np.ones(self._n_arm) * self.MAX_ARM_POS
         self._limUpArmVel = np.ones(self._n_arm) * self.MAX_ARM_VEL
         self._limUpArmAcc = np.ones(self._n_arm) * self.MAX_ARM_ACC
         super().__init__(render=render, dt=dt)
+        self._fk = GroundRobotFk(self._n_arm)
 
     def reset(self, pos=None, vel=None):
         self.resetCommon()
@@ -28,19 +31,29 @@ class GroundRobotArmEnv(GroundRobotEnv):
         return self._get_ob()
 
     def render(self, mode="human"):
-        from gym.envs.classic_control import rendering
         super().render(mode=mode, final=False)
-
-        # arm
-        q = self.state[3]
-        l, r, t, b = 0, self.LINK_LENGTH, 0.05, -0.05
-        p = [self.state[0], self.state[1]]
-        theta = self.state[2]
-        p_arm = p + 0.2 * np.array([np.cos(theta), np.sin(theta)])
-        tf_arm = rendering.Transform(rotation=theta + q, translation=p_arm)
-        link = self.viewer.draw_polygon([(l, b), (l, t), (r, t), (r, b)])
-        link.set_color(0, 0.2, 0.8)
-        link.add_attr(tf_arm)
+        for i in range(3, self._n_arm+3):
+            self.renderLink(i)
+        self.renderEndEffector()
         time.sleep(self.dt())
-
         return self.viewer.render(return_rgb_array=mode == "rgb_array")
+
+    def renderLink(self, i):
+        from gym.envs.classic_control import rendering
+        l, r, t, b = 0, self.LINK_LENGTH, 0.05, -0.05
+        fk = self._fk.fk(self.state[0: self._n_arm+3], i)
+        tf = rendering.Transform(rotation=fk[2], translation=fk[0:2])
+        link = self.viewer.draw_polygon([(l, b), (l, t), (r, t), (r, b)])
+        link.set_color(0, .6, .8)
+        joint = self.viewer.draw_circle(.10)
+        joint.set_color(0, 0.2, 0.8)
+        link.add_attr(tf)
+        joint.add_attr(tf)
+
+    def renderEndEffector(self):
+        from gym.envs.classic_control import rendering
+        fk = self._fk.fk(self.state[0: self._n_arm+3], self._n_arm+3)
+        tf = rendering.Transform(rotation=fk[2], translation=fk[0:2])
+        eejoint = self.viewer.draw_circle(.10)
+        eejoint.set_color(0, 0.2, 0.8)
+        eejoint.add_attr(tf)

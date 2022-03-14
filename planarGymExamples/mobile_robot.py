@@ -6,16 +6,19 @@ obstacles = False
 
 
 def main():
-    n = 5
+    #n = 5
+    n = 3
     env = gym.make("mobile-robot-acc-v0", render=True, n=n, dt=0.01)
     defaultAction = np.zeros(n)
-    defaultAction[0] = 1.0
-    defaultAction[3] = 1.0
+    # defaultAction[0] = 0.0
+    # defaultAction[3] = 1.0
+    # defaultAction[2] = 1.0
     n_episodes = 1
     n_steps = 400
     cumReward = 0.0
     for e in range(n_episodes):
-        ob = env.reset(pos=np.random.rand(n))
+        # ob = env.reset(pos=np.random.rand(n))
+        ob = env.reset(pos=np.array([0.0, 0.0*np.pi, 0.5*np.pi]))
         if obstacles:
             from planarGymExamples.obstacles import sphereObst1, sphereObst2
 

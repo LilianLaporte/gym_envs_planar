@@ -94,8 +94,9 @@ class MobileRobotEnv(PlanarEnv):
 
     def renderLink(self, i):
         from gym.envs.classic_control import rendering
-        l,r,t,b = 0, self.LINK_LENGTH, .01, -.01
+        l,r,t,b = 0, self.LINK_LENGTH, .02, -.02
         fk = self._fk.fk(self.state[0: self._n], i)
+        print('%d eme fk' % i, fk)
         tf = rendering.Transform(rotation=fk[2], translation=fk[0:2])
         link = self.viewer.draw_polygon([(l,b), (l,t), (r,t), (r,b)])
         link.set_color(0,.8, .8)
@@ -107,6 +108,7 @@ class MobileRobotEnv(PlanarEnv):
     def renderEndEffector(self):
         from gym.envs.classic_control import rendering
         fk = self._fk.fk(self.state[0: self._n], self._n)
+        print('%d eme fk' % (self._n), fk)
         tf = rendering.Transform(rotation=fk[2], translation=fk[0:2])
         eejoint = self.viewer.draw_circle(.10)
         eejoint.set_color(.8, .8, 0)
